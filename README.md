@@ -59,7 +59,7 @@ Each theme affects:
 ---
 
 ## **🌍 Live Demo**  
-Check out the live version [https://aichangetheme.netlify.app/](#).  
+Check out the live version [https://aichangetheme.netlify.app/](#)
 
 ---
 
