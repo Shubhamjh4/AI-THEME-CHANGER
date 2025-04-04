@@ -1,5 +1,5 @@
 # **AI THEME CHANGER** 🪄🎨  
-🚀 **Theme Wizard** is an interactive theme customization tool that allows users to apply predefined visual themes or generate unique themes based on their own descriptions.  
+🚀 **AI THEME CHANGER** is an interactive theme customization tool that allows users to apply predefined visual themes or generate unique themes based on their own descriptions.  
 
 ---
 
