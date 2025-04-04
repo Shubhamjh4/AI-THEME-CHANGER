@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Theme Switcher</title>
+    <style>
+        /* Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: all 0.5s ease;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .intro {
+            max-width: 800px;
+            margin-bottom: 2rem;
+            font-size: 1.2rem;
+            line-height: 1.6;
+        }
+
+        .theme-input {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 3rem;
+        }
+
+        #theme-search {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            border: 2px solid #333;
+            outline: none;
+        }
+
+        .magic-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 0.5rem 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .theme-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .theme-tag {
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            background: #f0f0f0;
+            cursor: pointer;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .theme-tag img {
+            width: 20px;
+            height: 20px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .content-box {
+            width: 100%;
+            max-width: 800px;
+            height: 300px;
+            border-radius: 10px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .content-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .content-description {
+            font-size: 1.1rem;
+            line-height: 1.5;
+            position: relative;
+            z-index: 2;
+        }
+
+        .content-image {
+            position: absolute;
+            right: -30px;
+            bottom: -30px;
+            width: 150px;
+            height: 150px;
+            opacity: 0.1;
+            transform: rotate(-15deg);
+            z-index: 1;
+            transition: all 0.8s ease;
+            filter: grayscale(50%);
+        }
+
+        .content-image:hover {
+            transform: rotate(0deg) scale(1.1);
+            opacity: 0.2;
+        }
+
+        .theme-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.1;
+            transition: opacity 1s ease;
+        }
+
+        .footer {
+            width: 100%;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.9rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Loading Animation */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .loading.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Easter Egg Animation */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .float-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* Audio Visualization */
+        .audio-vis {
+            display: flex;
+            gap: 5px;
+            margin-top: 2rem;
+            height: 50px;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .audio-bar {
+            width: 5px;
+            height: 20px;
+            background: currentColor;
+            border-radius: 2px;
+        }
+
+        /* Success message */
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transform: translateX(200%);
+            transition: transform 0.5s ease;
+            z-index: 1001;
+        }
+
+        .success-message.show {
+            transform: translateX(0);
+        }
+
+        /* Theme Default */
+        .theme-default {
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        /* Theme Preview Modal */
+        .theme-preview {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .theme-preview.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .preview-content {
+            width: 90%;
+            max-width: 900px;
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .preview-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .preview-gallery {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 15px 0;
+        }
+
+        .preview-image {
+            height: 200px;
+            border-radius: 8px;
+            transition: transform 0.3s;
+        }
+
+        .preview-image:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="theme-default">
+    <div class="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="theme-background"></div>
+
+    <div class="success-message">Theme applied successfully!</div>
+
+    <div class="container">
+        <h1>AI Theme Switcher</h1>
+        
+        <p class="intro">Enter a theme keyword below and watch as the entire page transforms! Try themes like "Cyberpunk", "Nature", "Retro", "Space", "Ocean", or get creative with your own ideas. The AI will generate a matching theme for your input.</p>
+        
+        <div class="theme-input">
+            <input type="text" id="theme-search" placeholder="Enter a theme (e.g., Cyberpunk, Nature, Retro...)" autocomplete="off">
+            <button class="magic-btn">Transform</button>
+        </div>
+        
+        <div class="theme-suggestions">
+            <div class="theme-tag" data-theme="cyberpunk">
+                <img src="/api/placeholder/40/40" alt="Cyberpunk icon" class="theme-icon">
+                Cyberpunk
+            </div>
+            <div class="theme-tag" data-theme="nature">
+                <img src="/api/placeholder/40/40" alt="Nature icon" class="theme-icon">
+                Nature
+            </div>
+            <div class="theme-tag" data-theme="retro">
+                <img src="/api/placeholder/40/40" alt="Retro icon" class="theme-icon">
+                Retro
+            </div>
+            <div class="theme-tag" data-theme="space">
+                <img src="/api/placeholder/40/40" alt="Space icon" class="theme-icon">
+                Space
+            </div>
+            <div class="theme-tag" data-theme="ocean">
+                <img src="/api/placeholder/40/40" alt="Ocean icon" class="theme-icon">
+                Ocean
+            </div>
+            <div class="theme-tag" data-theme="neon">
+                <img src="/api/placeholder/40/40" alt="Neon icon" class="theme-icon">
+                Neon
+            </div>
+            <div class="theme-tag" data-theme="minimalist">
+                <img src="/api/placeholder/40/40" alt="Minimalist icon" class="theme-icon">
+                Minimalist
+            </div>
+            <div class="theme-tag" data-theme="dark">
+                <img src="/api/placeholder/40/40" alt="Dark Mode icon" class="theme-icon">
+                Dark Mode
+            </div>
+        </div>
+        
+        <div class="content-box">
+            <h2 class="content-title">Your Content Here</h2>
+            <p class="content-description">This content box will adapt to your chosen theme. Try entering different themes to see how the styles change!</p>
+            
+            <div class="audio-vis">
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+            </div>
+            
+            <img src="/api/placeholder/150/150" alt="Theme illustration" class="content-image">
+        </div>
+    </div>
+    
+    <div class="theme-preview">
+        <div class="preview-content">
+            <button class="preview-close">&times;</button>
+            <h2>Theme Gallery</h2>
+            <p>Explore more visual examples of this theme</p>
+            <div class="preview-gallery">
+                <img src="/api/placeholder/320/200" alt="Theme preview 1" class="preview-image">
+                <img src="/api/placeholder/320/200" alt="Theme preview 2" class="preview-image">
+                <img src="/api/placeholder/320/200" alt="Theme preview 3" class="preview-image">
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <p>AI-Powered Theme Switcher &copy; 2025 | shubhamjh4 </p>
+    </footer>
+
+    <script>
+        // Wait for DOM to fully load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get DOM elements
+            const themeInput = document.getElementById('theme-search');
+            const magicBtn = document.querySelector('.magic-btn');
+            const themeTags = document.querySelectorAll('.theme-tag');
+            const loadingScreen = document.querySelector('.loading');
+            const successMessage = document.querySelector('.success-message');
+            const audioBars = document.querySelectorAll('.audio-bar');
+            const themeBackground = document.querySelector('.theme-background');
+            const contentImage = document.querySelector('.content-image');
+            const previewModal = document.querySelector('.theme-preview');
+            const previewClose = document.querySelector('.preview-close');
+            const themeIcons = document.querySelectorAll('.theme-icon');
+            
+            // Theme image paths
+            const themeImages = {
+                cyberpunk: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23000428'/%3E%3Cpath d='M20 20L80 20L80 80L20 80Z' stroke='%2300f0ff' stroke-width='2' fill='none'/%3E%3Cpath d='M35 35L65 35L65 65L35 65Z' stroke='%23ff2e63' stroke-width='2' fill='none'/%3E%3Cpath d='M10 10L90 90' stroke='%2300f0ff' stroke-width='1' fill='none'/%3E%3Cpath d='M90 10L10 90' stroke='%23ff2e63' stroke-width='1' fill='none'/%3E%3C/svg%3E",
+                
+                nature: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e9edc9'/%3E%3Cpath d='M20 80C20 80 30 70 40 75C50 80 60 65 70 70C80 75 80 80 80 80L20 80Z' fill='%2376c893'/%3E%3Cpath d='M30 70C30 50 40 60 50 40C60 60 70 50 70 70' stroke='%232d6a4f' stroke-width='2' fill='none'/%3E%3Ccircle cx='50' cy='30' r='10' fill='%23ffd166'/%3E%3C/svg%3E",
+                
+                retro: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23fdcb6e'/%3E%3Cpath d='M20 20L80 20L80 80L20 80Z' stroke='%23d35400' stroke-width='4' fill='none'/%3E%3Cpath d='M35 35L65 35L65 65L35 65Z' stroke='%236b5b95' stroke-width='4' fill='none'/%3E%3Ccircle cx='50' cy='50' r='10' fill='%23d35400'/%3E%3Cpath d='M30 70L70 70' stroke='%236b5b95' stroke-width='4'/%3E%3C/svg%3E",
+                
+                space: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23000000'/%3E%3Ccircle cx='50' cy='50' r='20' fill='%237b68ee' opacity='0.8'/%3E%3Ccircle cx='30' cy='30' r='5' fill='white'/%3E%3Ccircle cx='70' cy='20' r='3' fill='white'/%3E%3Ccircle cx='80' cy='60' r='4' fill='white'/%3E%3Ccircle cx='20' cy='70' r='2' fill='white'/%3E%3Ccircle cx='40' cy='80' r='3' fill='white'/%3E%3Ccircle cx='65' cy='75' r='2' fill='white'/%3E%3Ccircle cx='85' cy='40' r='1' fill='white'/%3E%3Ccircle cx='15' cy='40' r='1' fill='white'/%3E%3C/svg%3E",
+                
+                ocean: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%2300b4d8'/%3E%3Cpath d='M0 70C10 60 20 80 30 70C40 60 50 80 60 70C70 60 80 80 90 70C100 60 100 100 100 100L0 100Z' fill='%230077b6'/%3E%3Cpath d='M0 80C10 70 20 90 30 80C40 70 50 90 60 80C70 70 80 90 90 80C100 70 100 100 100 100L0 100Z' fill='%23023e8a' opacity='0.8'/%3E%3Ccircle cx='70' cy='20' r='10' fill='%23ffffff' opacity='0.8'/%3E%3Cpath d='M40 40C40 40 35 35 30 40C25 45 20 40 20 40' stroke='white' stroke-width='2' fill='none'/%3E%3C/svg%3E",
+                
+                neon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23121212'/%3E%3Crect x='25' y='25' width='50' height='50' stroke='%2300ffff' stroke-width='2' fill='none'/%3E%3Crect x='35' y='35' width='30' height='30' stroke='%23ff00ff' stroke-width='2' fill='none'/%3E%3Cpath d='M20 20L80 80' stroke='%2300ffff' stroke-width='2'/%3E%3Cpath d='M80 20L20 80' stroke='%23ff00ff' stroke-width='2'/%3E%3C/svg%3E",
+                
+                minimalist: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23ffffff'/%3E%3Ccircle cx='50' cy='50' r='20' stroke='%23333333' stroke-width='1' fill='none'/%3E%3Cpath d='M30 50L70 50' stroke='%23333333' stroke-width='1'/%3E%3Cpath d='M50 30L50 70' stroke='%23333333' stroke-width='1'/%3E%3C/svg%3E",
+                
+                dark: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23121212'/%3E%3Ccircle cx='50' cy='50' r='20' fill='%232196f3' opacity='0.5'/%3E%3Cpath d='M30 30L70 70' stroke='%23e0e0e0' stroke-width='1'/%3E%3Cpath d='M30 70L70 30' stroke='%23e0e0e0' stroke-width='1'/%3E%3Crect x='30' y='30' width='40' height='40' stroke='%232d2d2d' stroke-width='2' fill='none'/%3E%3C/svg%3E"
+            };
+            
+            // Background pattern images
+            const backgroundPatterns = {
+                cyberpunk: "data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2300f0ff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E",
+                
+                nature: "data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2376c893' fill-opacity='0.1'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 3.314 2.686 6 6 6v-2c-2.21 0-4-1.79-4-4 0-3.314-2.686-6-6-6-2.21 0-4-1.79-4-4zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E",
+                
+                retro: "data:image/svg+xml,%3Csvg width='84' height='48' viewBox='0 0 84 48' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d35400' fill-opacity='0.15'%3E%3Cpath d='M0 0h12v6H0V0zm24 0h12v6H24V0zm12 0h12v6H36V0zm24 0h12v6H60V0zm12 0h12v6H72V0zM0 12h12v6H0v-6zm24 0h12v6H24v-6zm12 0h12v6H36v-6zm24 0h12v6H60v-6zm12 0h12v6H72v-6zM0 24h12v6H0v-6zm24 0h12v6H24v-6zm12 0h12v6H36v-6zm24 0h12v6H60v-6zm12 0h12v6H72v-6zM0 36h12v6H0v-6zm24 0h12v6H24v-6zm12 0h12v6H36v-6zm24 0h12v6H60v-6zm12 0h12v6H72v-6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E",
+                
+                space: "data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10' cy='10' r='1' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='30' cy='15' r='1' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='50' cy='20' r='1' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='70' cy='25' r='1' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='90' cy='30' r='1' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='20' cy='40' r='1' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='40' cy='45' r='1' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='60' cy='50' r='1' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='80' cy='55' r='1' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='10' cy='60' r='1' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='30' cy='65' r='1' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='50' cy='70' r='1' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='70' cy='75' r='1' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='90' cy='80' r='1' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='20' cy='90' r='1' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='40' cy='95' r='1' fill='white' fill-opacity='0.5'/%3E%3C/svg%3E",
+                
+                ocean: "data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 C 10 5, 20 5, 30 0 C 40 -5, 50 -5, 60 0 C 70 5, 80 5, 90 0 C 100 -5, 110 -5, 120 0 L 120 10 C 110 15, 100 15, 90 10 C 80 5, 70 5, 60 10 C 50 15, 40 15, 30 10 C 20 5, 10 5, 0 10 Z' fill='%230077b6' fill-opacity='0.2' transform='translate(0, 20)'/%3E%3Cpath d='M0 0 C 10 5, 20 5, 30 0 C 40 -5, 50 -5, 60 0 C 70 5, 80 5, 90 0 C 100 -5, 110 -5, 120 0 L 120 10 C 110 15, 100 15, 90 10 C 80 5, 70 5, 60 10 C 50 15, 40 15, 30 10 C 20 5, 10 5, 0 10 Z' fill='%230077b6' fill-opacity='0.2' transform='translate(0, 40)'/%3E%3Cpath d='M0 0 C 10 5, 20 5, 30 0 C 40 -5, 50 -5, 60 0 C 70 5, 80 5, 90 0 C 100 -5, 110 -5, 120 0 L 120 10 C 110 15, 100 15, 90 10 C 80 5, 70 5, 60 10 C 50 15, 40 15, 30 10 C 20 5, 10 5, 0 10 Z' fill='%230077b6' fill-opacity='0.2' transform='translate(0, 60)'/%3E%3C/svg%3E",
+                
+                neon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23240046'/%3E%3Cpath d='M20 50L80 50' stroke='%23ff00ff' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M50 20L50 80' stroke='%2300ffff' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='50' cy='50' r='15' stroke='%23ff9e00' stroke-width='3' fill='none'/%3E%3Ccircle cx='50' cy='50' r='25' stroke='%23ff00ff' stroke-width='2' fill='none'/%3E%3Ccircle cx='20' cy='20' r='5' fill='%2300ffff'/%3E%3Ccircle cx='80' cy='80' r='5' fill='%23ff00ff'/%3E%3C/svg%3E",
+                
+                minimalist: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f8f9fa'/%3E%3Cpath d='M30 50L70 50' stroke='%23212529' stroke-width='2'/%3E%3Cpath d='M50 30L50 70' stroke='%23212529' stroke-width='2'/%3E%3C/svg%3E",
+                
+                dark: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23121212'/%3E%3Ccircle cx='50' cy='50' r='20' stroke='%23bb86fc' stroke-width='2' fill='none'/%3E%3Cpath d='M30 30L70 70' stroke='%2303dac6' stroke-width='2'/%3E%3Cpath d='M30 70L70 30' stroke='%23cf6679' stroke-width='2'/%3E%3C/svg%3E"
+            };
+            
+            // Predefined themes dictionary
+            const themes = {
+                cyberpunk: {
+                    background: 'linear-gradient(to right, #000428, #004e92)',
+                    textColor: '#00f0ff',
+                    accentColor: '#ff2e63',
+                    boxBackground: 'rgba(0, 0, 0, 0.7)',
+                    boxShadow: '0 0 10px #00f0ff, 0 0 20px rgba(0, 240, 255, 0.5)',
+                    fontFamily: "'Orbitron', sans-serif",
+                    backgroundPattern: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M0 0L50 0L0 50Z' fill='%2300f0ff' fill-opacity='0.1'/%3E%3Cpath d='M100 0L100 50L50 0Z' fill='%23ff2e63' fill-opacity='0.1'/%3E%3Cpath d='M0 100L0 50L50 100Z' fill='%23ff2e63' fill-opacity='0.1'/%3E%3Cpath d='M100 100L50 100L100 50Z' fill='%2300f0ff' fill-opacity='0.1'/%3E%3C/svg%3E\")",
+                    borderColor: '#00f0ff',
+                    borderStyle: '2px solid',
+                    buttonStyle: 'background: black; color: #00f0ff; border: 1px solid #00f0ff; text-transform: uppercase;',
+                    contentImage: '/api/placeholder/150/150'
+                },
+                nature: {
+                    background: 'linear-gradient(to bottom, #e9edc9, #ccd5ae)',
+                    textColor: '#386641',
+                    accentColor: '#588157',
+                    boxBackground: 'rgba(255, 255, 255, 0.8)',
+                    boxShadow: '0 5px 15px rgba(56, 102, 65, 0.2)',
+                    fontFamily: "'Quicksand', sans-serif",
+                    backgroundPattern: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M30 50C30 30 50 30 50 10C50 30 70 30 70 50C70 70 50 70 50 90C50 70 30 70 30 50Z' fill='%2376c893' fill-opacity='0.1'/%3E%3C/svg%3E\")",
+                    borderColor: '#76c893',
+                    borderStyle: '1px solid',
+                    buttonStyle: 'background: #588157; color: white; border-radius: 20px; font-weight: 500;',
+                    contentImage: '/api/placeholder/150/150'
+                },
+                retro: {
+                    background: 'linear-gradient(45deg, #fdcb6e, #e17055)',
+                    textColor: '#6b5b95',
+                    accentColor: '#d35400',
+                    boxBackground: '#ffeaa7',
+                    boxShadow: '5px 5px 0px #d35400',
+                    fontFamily: "'VT323', monospace",
+                    backgroundPattern: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='20' height='20' fill='%23d35400' fill-opacity='0.1'/%3E%3Crect x='20' y='20' width='20' height='20' fill='%23d35400' fill-opacity='0.1'/%3E%3C/svg%3E\")",
+                    borderColor: '#d35400',
+                    borderStyle: '4px solid',
+                    buttonStyle: 'background: #d35400; color: white; border: none; font-family: "VT323", monospace; font-size: 1.2rem;',
+                    contentImage: '/api/placeholder/150/150'
+                },
+                space: {
+                    background: 'linear-gradient(to bottom, #0f0c29, #302b63, #24243e)',
+                    textColor: '#fff',
+                    accentColor: '#7b68ee',
+                    boxBackground: 'rgba(12, 11, 39, 0.7)',
+                    boxShadow: '0 0 20px rgba(123, 104, 238, 0.4)',
+                    fontFamily: "'Exo 2', sans-serif",
+                    backgroundPattern: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ccircle cx='10' cy='10' r='1' fill='white'/%3E%3Ccircle cx='30' cy='40' r='1' fill='white'/%3E%3Ccircle cx='50' cy='20' r='1' fill='white'/%3E%3Ccircle cx='70' cy='50' r='1' fill='white'/%3E%3Ccircle cx='90' cy='30' r='1' fill='white'/%3E%3Ccircle cx='110' cy='60' r='1' fill='white'/%3E%3Ccircle cx='130' cy='40' r='1' fill='white'/%3E%3Ccircle cx='150' cy='70' r='1' fill='white'/%3E%3Ccircle cx='170' cy='50' r='1' fill='white'/%3E%3Ccircle cx='190' cy='80' r='1' fill='white'/%3E%3Ccircle cx='20' cy='90' r='1' fill='white'/%3E%3Ccircle cx='40' cy='70' r='1' fill='white'/%3E%3Ccircle cx='60' cy='100' r='1' fill='white'/%3E%3Ccircle cx='80' cy='80' r='1' fill='white'/%3E%3Ccircle cx='100' cy='110' r='1' fill='white'/%3E%3Ccircle cx='120' cy='90' r='1' fill='white'/%3E%3Ccircle cx='140' cy='120' r='1' fill='white'/%3E%3Ccircle cx='160' cy='100' r='1' fill='white'/%3E%3Ccircle cx='180' cy='130' r='1' fill='white'/%3E%3C/svg%3E\")",
+                    borderColor: '#7b68ee',
+                    borderStyle: '1px solid',
+                    buttonStyle: 'background: #7b68ee; color: white; border: none; text-transform: uppercase; letter-spacing: 1px;',
+                    contentImage: '/api/placeholder/150/150'
+                },
+                ocean: {
+                    background: 'linear-gradient(to bottom, #00b4d8, #0077b6)',
+                    textColor: '#caf0f8',
+                    accentColor: '#90e0ef',
+                    boxBackground: 'rgba(1, 67, 97, 0.8)',
+                    boxShadow: '0 5px 15px rgba(0, 119, 182, 0.3)',
+                    fontFamily: "'Montserrat', sans-serif",
+                    backgroundPattern: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M0 70C10 60 20 80 30 70C40 60 50 80 60 70C70 60 80 80 90 70C100 60 100 70 100 70L100 100L0 100Z' fill='%230077b6' fill-opacity='0.2'/%3E%3C/svg%3E\")",
+                    borderColor: '#90e0ef',
+                    borderStyle: '1px solid',
+                    buttonStyle: 'background: #023e8a; color: white; border: none; border-radius: 4px; font-weight: 500;',
+                    contentImage: '/api/placeholder/150/150'
+                },
+                neon: {
+                    background: 'linear-gradient(to bottom, #240046, #3c096c)',
+                    textColor: '#ff00ff',
+                    accentColor: '#00ffff',
+                    boxBackground: 'rgba(24, 0, 46, 0.8)',
+                    boxShadow: '0 0 10px #ff00ff, 0 0 20px rgba(255, 0, 255, 0.5)',
+                    fontFamily: "'Press Start 2P', cursive",
+                    backgroundPattern: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M0 0L100 100' stroke='%23ff00ff' stroke-width='1' stroke-opacity='0.1'/%3E%3Cpath d='M100 0L0 100' stroke='%2300ffff' stroke-width='1' stroke-opacity='0.1'/%3E%3C/svg%3E\")",
+                    borderColor: '#ff00ff',
+                    borderStyle: '1px solid',
+                    buttonStyle: 'background: black; color: #00ffff; border: 1px solid #00ffff; text-transform: uppercase; text-shadow: 0 0 5px #00ffff;',
+                    contentImage: '/api/placeholder/150/150'
+                },
+                minimalist: {
+                    background: '#f8f9fa',
+                    textColor: '#212529',
+                    accentColor: '#495057',
+                    boxBackground: '#ffffff',
+                    boxShadow: '0 5px 15px rgba(0, 0, 0, 0.05)',
+                    fontFamily: "'Inter', sans-serif",
+                    backgroundPattern: "",
+                    borderColor: '#e9ecef',
+                    borderStyle: '1px solid',
+                    buttonStyle: 'background: #212529; color: white; border: none; border-radius: 4px; font-weight: 500;',
+                    contentImage: '/api/placeholder/150/150'
+                },
+                dark: {
+                    background: '#121212',
+                    textColor: '#e0e0e0',
+                    accentColor: '#bb86fc',
+                    boxBackground: '#1e1e1e',
+                    boxShadow: '0 5px 15px rgba(0, 0, 0, 0.3)',
+                    fontFamily: "'Roboto', sans-serif",
+                    backgroundPattern: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23121212'/%3E%3Cpath d='M0 0L100 100' stroke='%23333333' stroke-width='1'/%3E%3C/svg%3E\")",
+                    borderColor: '#333333',
+                    borderStyle: '1px solid',
+                    buttonStyle: 'background: #bb86fc; color: #121212; border: none; font-weight: 500;',
+                    contentImage: '/api/placeholder/150/150'
+                }
+            };
+            
+            // Apply a theme based on the given name
+            function applyTheme(themeName) {
+                // Show loading screen
+                loadingScreen.classList.add('show');
+                
+                // Simulate AI processing time
+                setTimeout(() => {
+                    const theme = themes[themeName.toLowerCase()] || generateTheme(themeName);
+                    
+                    // Apply to body and elements
+                    document.body.style.background = theme.background;
+                    document.body.style.color = theme.textColor;
+                    document.body.style.fontFamily = theme.fontFamily || 'inherit';
+                    
+                    // Apply to background pattern
+                    themeBackground.style.background = theme.backgroundPattern || 'none';
+                    themeBackground.style.opacity = theme.backgroundPattern ? '0.1' : '0';
+                    
+                    // Apply to content box
+                    const contentBox = document.querySelector('.content-box');
+                    contentBox.style.background = theme.boxBackground;
+                    contentBox.style.boxShadow = theme.boxShadow;
+                    contentBox.style.border = `${theme.borderStyle || '1px solid'} ${theme.borderColor}`;
+                    
+                    // Apply to buttons
+                    document.querySelectorAll('.magic-btn').forEach(btn => {
+                        const styleProperties = theme.buttonStyle.split(';');
+                        styleProperties.forEach(prop => {
+                            if (prop.trim()) {
+                                const [property, value] = prop.split(':');
+                                btn.style[property.trim()] = value.trim();
+                            }
+                        });
+                    });
+                    
+                    // Apply to input
+                    const input = document.getElementById('theme-search');
+                    input.style.borderColor = theme.borderColor;
+                    input.style.color = theme.textColor;
+                    input.style.background = theme.boxBackground;
+                    
+                    // Apply to theme tags
+                    themeTags.forEach(tag => {
+                        tag.style.color = theme.accentColor;
+                        tag.style.borderColor = theme.borderColor;
+                    });
+                    
+                    // Update content image if provided
+                    if (theme.contentImage) {
+                        contentImage.src = theme.contentImage;
+                    }
+                    
+                    // Hide loading, show success message
+                    loadingScreen.classList.remove('show');
+                    successMessage.classList.add('show');
+                    setTimeout(() => {
+                        successMessage.classList.remove('show');
+                    }, 2000);
+                    
+                    // Animate audio bars
+                    animateAudioBars(theme.accentColor);
+                    
+                    // Update theme icons
+                    updateThemeIcons(themeName);
+                }, 800);
+            }
+            
+            // Generate a theme based on user input
+            function generateTheme(themeName) {
+                // Generate a pseudo-random theme based on the input string
+                // In a real app, this would call an AI API
+                
+                // Create a simple hash of the theme name
+                let hash = 0;
+                for (let i = 0; i < themeName.length; i++) {
+                    hash = themeName.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                
+                // Generate colors based on the hash
+                const hue = Math.abs(hash % 360);
+                const complementaryHue = (hue + 180) % 360;
+                
+                return {
+                    background: `linear-gradient(to bottom, hsl(${hue}, 70%, 20%), hsl(${hue}, 70%, 30%))`,
+                    textColor: `hsl(${hue}, 70%, 90%)`,
+                    accentColor: `hsl(${complementaryHue}, 70%, 60%)`,
+                    boxBackground: `hsla(${hue}, 70%, 15%, 0.8)`,
+                    boxShadow: `0 5px 15px hsla(${hue}, 70%, 10%, 0.5)`,
+                    fontFamily: "'Montserrat', sans-serif",
+                    backgroundPattern: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='hsl(${hue}, 70%, 20%)'/%3E%3Cpath d='M0 0L100 100M100 0L0 100' stroke='hsl(${complementaryHue}, 70%, 60%)' stroke-width='1' stroke-opacity='0.1'/%3E%3C/svg%3E")`,
+                    borderColor: `hsl(${complementaryHue}, 70%, 60%)`,
+                    borderStyle: '1px solid',
+                    buttonStyle: `background: hsl(${complementaryHue}, 70%, 40%); color: white; border: none; border-radius: 4px; font-weight: 500;`,
+                    contentImage: '/api/placeholder/150/150'
+                };
+            }
+            
+            // Animate audio visualization bars
+            function animateAudioBars(color) {
+                audioBars.forEach((bar, index) => {
+                    // Reset any previous animation
+                    bar.style.animation = 'none';
+                    
+                    // Set color
+                    bar.style.background = color;
+                    
+                    // Force reflow
+                    void bar.offsetWidth;
+                    
+                    // Set new animation
+                    const duration = 0.5 + Math.random() * 0.5;
+                    const delay = Math.random() * 0.3;
+                    const height = 20 + Math.random() * 30;
+                    
+                    bar.style.animation = `none`;
+                    bar.style.height = `${height}px`;
+                    bar.style.animationDelay = `${delay}s`;
+                    
+                    // Create keyframe animation
+                    bar.animate([
+                        { height: '5px' },
+                        { height: `${height}px` },
+                        { height: '5px' }
+                    ], {
+                        duration: duration * 1000,
+                        iterations: Infinity,
+                        easing: 'ease-in-out',
+                        delay: delay * 1000
+                    });
+                });
+            }
+            
+            // Update theme icons based on selected theme
+            function updateThemeIcons(themeName) {
+                themeTags.forEach(tag => {
+                    const tagTheme = tag.getAttribute('data-theme');
+                    const icon = tag.querySelector('.theme-icon');
+                    
+                    // Set correct icon
+                    if (themeImages[tagTheme]) {
+                        icon.src = themeImages[tagTheme];
+                    }
+                    
+                    // Highlight selected theme
+                    if (tagTheme.toLowerCase() === themeName.toLowerCase()) {
+                        tag.style.transform = 'scale(1.1)';
+                        tag.style.fontWeight = 'bold';
+                    } else {
+                        tag.style.transform = 'scale(1)';
+                        tag.style.fontWeight = 'normal';
+                    }
+                });
+            }
+            
+            // Event listeners
+            magicBtn.addEventListener('click', () => {
+                const theme = themeInput.value.trim();
+                if (theme) {
+                    applyTheme(theme);
+                }
+            });
+            
+            themeInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    const theme = themeInput.value.trim();
+                    if (theme) {
+                        applyTheme(theme);
+                    }
+                }
+            });
+            
+            themeTags.forEach(tag => {
+                tag.addEventListener('click', () => {
+                    const theme = tag.getAttribute('data-theme');
+                    themeInput.value = theme;
+                    applyTheme(theme);
+                });
+            });
+            
+            previewClose.addEventListener('click', () => {
+                previewModal.classList.remove('show');
+            });
+            
+            // Easter egg: double-click the title to make it float
+            document.querySelector('h1').addEventListener('dblclick', function() {
+                this.classList.toggle('float-animation');
+            });
+            
+            // Initialize with default theme
+            updateThemeIcons('default');
+            
+            // Secret theme combinations (konami code-like)
+            let secretCode = [];
+            document.addEventListener('keydown', (e) => {
+                secretCode.push(e.key);
+                secretCode = secretCode.slice(-10);
+                
+                // Check for "themewizard" pattern
+                if (secretCode.join('').includes('themewizard')) {
+                    // Apply a special rainbow theme
+                    const rainbowTheme = {
+                        background: 'linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)',
+                        textColor: 'white',
+                        accentColor: 'gold',
+                        boxBackground: 'rgba(0, 0, 0, 0.5)',
+                        boxShadow: '0 0 20px gold',
+                        fontFamily: "'Comic Sans MS', cursive",
+                        backgroundPattern: '',
+                        borderColor: 'gold',
+                        borderStyle: '3px dashed',
+                        buttonStyle: 'background: gold; color: black; border: none; border-radius: 50px; font-weight: bold;',
+                        contentImage: '/api/placeholder/150/150'
+                    };
+                    
+                    // Apply the theme manually
+                    document.body.style.background = rainbowTheme.background;
+                    document.body.style.color = rainbowTheme.textColor;
+                    document.body.style.fontFamily = rainbowTheme.fontFamily;
+                    
+                    document.querySelector('.content-box').style.background = rainbowTheme.boxBackground;
+                    document.querySelector('.content-box').style.boxShadow = rainbowTheme.boxShadow;
+                    document.querySelector('.content-box').style.border = `${rainbowTheme.borderStyle} ${rainbowTheme.borderColor}`;
+                    
+                    magicBtn.style.background = 'gold';
+                    magicBtn.style.color = 'black';
+                    magicBtn.style.borderRadius = '50px';
+                    magicBtn.style.fontWeight = 'bold';
+                    
+                    // Show success message with special text
+                    successMessage.textContent = 'Secret rainbow theme activated!';
+                    successMessage.classList.add('show');
+                    
+                    // Reset secret code
+                    secretCode = [];
+                    
+                    setTimeout(() => {
+                        successMessage.classList.remove('show');
+                        successMessage.textContent = 'Theme applied successfully!';
+                    }, 3000);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
